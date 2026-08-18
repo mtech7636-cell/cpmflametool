@@ -106,7 +106,7 @@ document.getElementById('loginBtn').addEventListener('click', async ()=>{
   selectedGame = GAMES[gType];
 
   if(!selectedGame) return updateStatus("Please select a game!", true);
-  if(keyVal !== "FLAME2026") return updateStatus("❌ Invalid Access Key!", true);
+  if(keyVal !== "FLAME") return updateStatus("❌ Invalid Access Key!", true);
   if(!emailVal || !passVal) return updateStatus("Enter Email & Password!", true);
 
   updateStatus("⏳ Authenticating...");
